@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Visão Geral do Projeto - Sistema de Assinaturas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        h1, h2, h3 { color: #2c3e50; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        code { font-family: monospace; background: #eee; padding: 2px 4px; border-radius: 3px; }
+        ul { margin-bottom: 20px; }
+        .section { margin-bottom: 40px; }
+    </style>
+</head>
+<body>
+
+<h1>Visão Geral do Projeto</h1>
+
+<p>Este projeto possui dois módulos principais:</p>
+<ul>
+    <li><strong>Subscription</strong>: Gerencia assinaturas pré-pagas, com renovação automática e controle de pagamentos.</li>
+    <li><strong>Payment Simulator</strong>: Simula um provedor externo de pagamentos via RabbitMQ.</li>
+</ul>
+
+<div class="section">
+<h2>Regras de Negócio</h2>
+<ul>
+    <li>Renovação automática no dia do vencimento.</li>
+    <li>Um usuário pode ter apenas uma assinatura ATIVA por vez.</li>
+    <li>Cancelamento mantém acesso até o fim do ciclo.</li>
+    <li>Upgrades e downgrades criam novas assinaturas com cobrança proporcional.</li>
+    <li>Caso um pagamento falhe, um cron diário solicita o pagamento por até 3 dias (uma solicitação por dia). Sem confirmação após as 3 solicitações, a assinatura é suspensa.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Robustez e Concorrência</h2>
+<ul>
+    <li>@Transactional nos serviços garante atomicidade e rollback.</li>
+    <li>Lock pessimista na assinatura ATIVA (SELECT FOR UPDATE) para evitar corridas em upgrade/renovação.</li>
+    <li>Índices únicos parciais: 1 <code>ATIVA</code> e 1 <code>PRE_PROCESSADA</code> por usuário; unique em <code>payments.subscription_id</code>.</li>
+    <li>Ordenação de escrita: <code>flush()</code> antes de criar nova ATIVA para respeitar o índice parcial.</li>
+    <li>Publicação only-after-commit: mensagens enviadas após commit (TransactionSynchronization.afterCommit).</li>
+    <li>Retry no RabbitMQ: cada solicitação publicada tem até 3 tentativas internas antes de ser roteada para a DLQ.</li>
+    <li>Idempotência no consumo: ignora eventos se Payment já estiver SUCCESS.</li>
+    <li>Global Exception Handler: respostas padronizadas (400/404/500) e validações.</li>
+    <li>Flyway: migração versionada do schema (V1), evitando ddl-auto em produção.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Decisões de Design</h2>
+<ul>
+    <li>Pré-pago por ser o cenário mais comum de assinaturas.</li>
+    <li>Renovação cria novo ciclo para manter histórico claro.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Testes e Desenvolvimento</h2>
+<ul>
+    <li>Crons agendados (scheduler) com endpoint para acionamento manual em testes.</li>
+    <li>Endpoints para confirmar sucesso/falha de pagamento manualmente.</li>
+    <li>Simulador pode desabilitar consumo para testar falhas.</li>
+    <li>Endpoints administrativos expostos apenas para desenvolvimento.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Riscos e Escopo</h2>
+<ul>
+    <li>Falta de autenticação/autorização (JWT + roles) — não priorizado pelo tempo do desafio.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Como Rodar</h2>
+<pre><code>./gradlew clean build -x test &amp;&amp; docker compose up --build
+</code></pre>
+</div>
+
+<div class="section">
+<h2>URLs de Acesso</h2>
+<ul>
+    <li>Subscription API: <a href="http://localhost:8080">http://localhost:8080</a></li>
+    <li>Payment Simulator API: <a href="http://localhost:8081">http://localhost:8081</a></li>
+    <li>RabbitMQ Management UI: <a href="http://localhost:15672">http://localhost:15672</a></li>
+    <li>Postgres: <a href="http://localhost:5431">localhost:5431</a></li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Configuração (.env)</h2>
+<pre><code>RABBITMQ_DEFAULT_USER=myuser
+RABBITMQ_DEFAULT_PASS=secret
+POSTGRES_DB=mydatabase
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=secret
+</code></pre>
+<p>Crie um arquivo <code>.env</code> na raiz (mesma pasta do <code>compose.yaml</code>). Essas variáveis serão injetadas via Docker Compose.</p>
+</div>
+
+<div class="section">
+<h2>Primeira execução (setup)</h2>
+<p>Pré-requisitos: Docker, Docker Compose e JDK 17 (para build local com Gradle).</p>
+<pre><code>gradle --no-daemon wrapper --gradle-version 9.0 --distribution-type bin
+chmod +x ./gradlew
+./gradlew clean build -x test &amp;&amp; docker compose up --build
+</code></pre>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+bootJar {
+    enabled = true
+    archiveClassifier = '' // Remove sufixos como '-boot' do nome do arquivo
+}
+
+jar {
+    enabled = false // Desativa o JAR comum de biblioteca para não confundir o Docker
+}
+springBoot {
+    mainClass = 'com.patricia.paymentSimulator.PaymentSimulatorApplication'
+}
+group = 'com'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+
+// 🔥 Auto-added by CRUD Generator
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Clean, correct test dependencies
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Spring Retry for retry interceptor (explicit stable version)
+    implementation 'org.springframework.retry:spring-retry:1.3.4'
+    // AspectJ weaver if needed for AOP at runtime
+    implementation 'org.aspectj:aspectjweaver:1.9.9.1'
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

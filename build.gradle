@@ -1,0 +1,6 @@
+// build.gradle (Criado na pasta raiz do projeto)
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}

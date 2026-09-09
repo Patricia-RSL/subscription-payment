@@ -1,0 +1,54 @@
+# Gradle build files
+/build/
+**/build/
+/.gradle/
+**/.gradle/
+
+# IntelliJ IDEA files
+/.idea/
+*.iml
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+
+# Java class files
+*.class
+
+# JAR files
+*.jar
+
+# Temporary files
+/tmp/
+
+# Spring Boot
+spring.log
+
+# Others
+out/
+
+# Ignore generated sources
+**/generated/
+
+# Ignore test reports
+**/build/reports/
+
+# Ignore Eclipse files
+.project
+.classpath
+.settings/
+
+# Ignore Maven wrapper files
+.mvn/
+
+# Ignore coverage reports
+coverage/
+
+# Ignore node_modules if any
+node_modules/
